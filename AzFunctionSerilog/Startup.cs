@@ -1,8 +1,8 @@
-﻿using Microsoft.Azure.WebJobs;
+﻿using AzFunctionSerilog.Infrastructure.Logging;
+using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Serilog;
 
 [assembly: WebJobsStartup(typeof(AzFunctionSerilog.Startup))]
 
@@ -13,25 +13,25 @@ namespace AzFunctionSerilog {
     /// Implements the <see cref="Microsoft.Azure.WebJobs.Hosting.IWebJobsStartup" />
     /// </summary>
     /// <seealso cref="Microsoft.Azure.WebJobs.Hosting.IWebJobsStartup" />
-    /// TODO Edit XML Comment Template for Startup
     public class Startup : IWebJobsStartup {
+
+        private IConfigurationRoot _configurationRoot;
 
         /// <summary>
         /// Configures the specified builder.
         /// </summary>
         /// <param name="builder">The builder.</param>
-        /// TODO Edit XML Comment Template for Configure
         public void Configure(IWebJobsBuilder builder) {
 
             // Add dependency injection for the ILogger.
-            builder.Services.AddSingleton<ILogger>(logger => GetSeriLogger());
+            builder.Services.AddSingleton<IAzFunctionLogger>(logger => new AzFunctionLogger(Configuration));
         }
 
         /// <summary>
         /// Gets the constructed <see cref="IConfigurationRoot"/> instance.
         /// </summary>
         /// <returns>IConfigurationRoot.</returns>
-        public IConfigurationRoot GetConfiguration() {
+        private IConfigurationRoot GetConfiguration() {
 
             var environmentSettings = $"appsettings.{AzureVariables.AzureFunctionsEnvironment}.json";
 
@@ -44,27 +44,16 @@ namespace AzFunctionSerilog {
         }
 
         /// <summary>
-        /// Gets the Serilog Logger.
+        /// Gets the configuration.
         /// </summary>
-        /// <returns><see cref="Serilog.ILogger"/>.</returns>
-        public ILogger GetSeriLogger() {
-            var logger = new LoggerConfiguration()
-                .ReadFrom.Configuration(GetConfiguration())
-                // The following enrichments should be loaded from the appsettings.json files "Serilog:Enrich" values.
-                //.Enrich.FromLogContext()
-                //.Enrich.WithThreadId()
-                //.Enrich.WithMachineName()
-                .CreateLogger();
-
-            // At this point, you should see logger._enricher contain 4 values in it's collection.
-            return logger;
-        }
+        /// <value>The configuration.</value>
+        private IConfigurationRoot Configuration => (_configurationRoot ?? (_configurationRoot = GetConfiguration()));
 
         /// <summary>
         /// Gets the function root directory path.
         /// </summary>
         /// <value>The function root directory path.</value>
-        public string FunctionRootPath =>
+        private string FunctionRootPath =>
             AzureVariables.AzureWebJobsScriptRoot ?? $"{AzureVariables.HomeDirectory}/site/wwwroot";
     }
 }
