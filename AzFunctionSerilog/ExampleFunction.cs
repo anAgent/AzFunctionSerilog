@@ -1,3 +1,4 @@
+using AzFunctionSerilog.Infrastructure.Logging;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -16,9 +17,9 @@ namespace AzFunctionSerilog {
         /// <summary>
         /// Initializes a new instance of the <see cref="ExampleFunction" /> class.
         /// </summary>
-        /// <param name="log">The <see cref="Serilog.ILogger" />.</param>
-        public ExampleFunction(ILogger log) {
-            _log = log;
+        /// <param name="logger">The logger.</param>
+        public ExampleFunction(IAzFunctionLogger logger) {
+            _log = logger.Log;
         }
 
         /// <summary>
